@@ -2,6 +2,7 @@ module Bindings (idle, display, reshape, keyboardMouse) where
  
 import Graphics.UI.GLUT
 import Data.IORef
+import Data.Char
 import Display
 
 
@@ -20,13 +21,13 @@ rescale (Position x y) (Position xw yw, Size w h) =
         yF = fromIntegral y in
             ((((2*(xF - xwF))/wF)-1), -(((2*(yF - ywF)) / hF)-1))
 
-keyboardMouse :: IORef (Maybe (Either Coord2 Coord2)) -> KeyboardMouseCallback
-keyboardMouse _ (Char 'q') Down _ _ = do
+keyboardMouse :: IORef (Maybe (Either Coord2 Coord2)) -> IORef Int -> KeyboardMouseCallback
+keyboardMouse _ _ (Char 'q') Down _ _ = do
     window <- get currentWindow
     case window of 
         Nothing -> return ()
         (Just w) -> destroyWindow w
-keyboardMouse pos (MouseButton button) Down _ position = 
+keyboardMouse pos _ (MouseButton button) Down _ position = 
     do
         window <- get viewport
         putStrLn "clicked"
@@ -39,7 +40,12 @@ keyboardMouse pos (MouseButton button) Down _ position =
         putStrLn (show show_pos)
         putStrLn (show window)
         postRedisplay Nothing
-keyboardMouse _ key place modifiers position = do
+keyboardMouse _ width (Char c) Down _ _ = do
+    if isDigit c then do
+        width $= digitToInt c
+        postRedisplay Nothing
+                 else return()
+keyboardMouse _ _ key place modifiers position = do
     putStrLn (show key)
     putStrLn (show place)
     putStrLn (show modifiers)

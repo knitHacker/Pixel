@@ -9,8 +9,9 @@ main = do
     _window <- createWindow "Hello World"
     reshapeCallback $= Just reshape
     pos <- newIORef Nothing
-    keyboardMouseCallback $= Just (keyboardMouse pos)
-    displayCallback $= display pos
+    width <- newIORef 4
+    keyboardMouseCallback $= Just (keyboardMouse pos width)
+    displayCallback $= display pos width
     actionOnWindowClose $= MainLoopReturns
     mainLoop
     putStrLn "Bye now"
