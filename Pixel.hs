@@ -8,8 +8,9 @@ main = do
     initialDisplayMode $= [DoubleBuffered]
     _window <- createWindow "Hello World"
     reshapeCallback $= Just reshape
-    pos <- newIORef (0, 0)
+    pos <- newIORef Nothing
     keyboardMouseCallback $= Just (keyboardMouse pos)
     displayCallback $= display pos
-    idleCallback $= Just idle
+    actionOnWindowClose $= MainLoopReturns
     mainLoop
+    putStrLn "Bye now"

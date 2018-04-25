@@ -1,4 +1,4 @@
-module Display (idle, display) where
+module Display (idle, display, Coord2) where
  
 import Graphics.UI.GLUT
 import Control.Monad
@@ -24,13 +24,12 @@ squares n w = squares' xPoints yPoints
           xPoints = subPoints (-(w/2))
           yPoints = subPoints (-(w/2))
           subPoints subW = let newSub = subW + subSquareW in
-                if newSub < w then subW : (subPoints newSub)
-                              else []
+                if subW <= (w/2) then subW : (subPoints newSub)
+                                 else []
           squares' (x1:x2:xs) ys = (rows x1 x2 ys) ++ (squares' (x2:xs) ys)
-              where
-                  rows x1 x2 (y1: y2: ys') = (Square x1 x2 y1 y2) : (rows x1 x2 (y2:ys'))
-                  rows _ _ _ = []
           squares' _ _ = []
+          rows x1 x2 (y1: y2: ys') = (Square x1 x2 y1 y2) : (rows x1 x2 (y2:ys'))
+          rows _ _ _ = []
 
 
 drawSquare :: PrimitiveMode -> Square -> IO()
@@ -45,8 +44,9 @@ findSquare x y (s@(Square x1 x2 y1 y2):tl) =
                                             else findSquare x y tl
 
 
-display :: IORef (GLfloat, GLfloat) -> DisplayCallback
-display pos = let subSquares = squares 4 1.0 in do
+
+display :: IORef (Maybe (Either Coord2 Coord2)) -> DisplayCallback
+display pos = let subSquares = squares 5 1.0 in do
     clear [ColorBuffer, DepthBuffer] -- clear depth buffer too
     clear [ColorBuffer]
     loadIdentity
@@ -54,13 +54,21 @@ display pos = let subSquares = squares 4 1.0 in do
     square 1.0 Quads
     color $ Color3 1 0 (0::GLfloat)
     mapM_ (drawSquare LineLoop) subSquares
-    color $ Color3 0 1 (0::GLfloat)
-    (x',y') <- get pos
-    renderPrimitive Points $ do
-        vertex $ Vertex2 x' y'
-    case findSquare x' y' subSquares of
+    maybePos <- get pos
+    case maybePos of
         Nothing -> return ()
-        (Just square) -> drawSquare Quads square
+        (Just e) -> do
+            case e of
+                (Left (x',y')) -> do
+                    color $ Color3 0 1 (0::GLfloat)
+                    case findSquare x' y' subSquares of
+                        Nothing -> return ()
+                        (Just square) -> drawSquare Quads square
+                (Right (x', y')) -> do
+                    color $ Color3 0 0 (1::GLfloat)
+                    case findSquare x' y' subSquares of
+                        Nothing -> return ()
+                        (Just square) -> drawSquare Quads square
     swapBuffers
 
 
